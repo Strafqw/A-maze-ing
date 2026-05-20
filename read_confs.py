@@ -2,6 +2,7 @@
 
 import json
 import random
+from collections import deque
 from vars import *
 
 
@@ -15,7 +16,6 @@ class Confs:
         try:
             config = {}
 
-            coords = ["ENTRY", "EXIT"]
             int_measures = ["WIDTH", "HEIGHT"]
             with open(self.confs_file) as f:
                 for line in f:
@@ -28,7 +28,7 @@ class Confs:
                     else:
                         config[key.strip()] = value.strip()
 
-            print(json.dumps(config, indent=2))
+            # print(json.dumps(config, indent=2))
             return config
 
         except Exception as e:
@@ -44,9 +44,12 @@ class MazeGenerator:
         self.config  = config
         self.width   = self.config.get('WIDTH')
         self.height  = self.config.get('HEIGHT')
+        self.entry = [int(_) for _ in self.config.get('ENTRY').split(',')]
+        self.exit = [int(_) for _ in self.config.get('EXIT').split(',')]
         self.ft_grid = None
         self.grid    = self.dfs(self.width, self.height)
         self.make_imperfect()
+        print(f"is perfect? {self.is_perfect_maze()}")
 
     def close_ft(self, visited: list, glip: list):
         for _ in glip:
@@ -60,8 +63,8 @@ class MazeGenerator:
         grid = [[0b1111 for _ in range(width)] for _ in range(height)]
         visited = [[False]*width for _ in range(height)]
         ft_closed = self.close_ft(visited, GLYPH_42)
-        stack = [(ENTRY[1], ENTRY[0])]
-        visited[ENTRY[0]][ENTRY[1]] = True
+        stack = [(self.entry[1], self.entry[0])]
+        visited[self.entry[0]][self.entry[1]] = True
         if self.config.get("SEED") == '1':
             random.seed(10)
 
@@ -94,7 +97,7 @@ class MazeGenerator:
             return True
         return False
 
-    def make_imperfect(self):
+    def make_imperfect(self) -> None:
         if self.config.get('PERFECT') == 'True':
             return None
         dirs = DIRECTIONS[:]
@@ -110,9 +113,108 @@ class MazeGenerator:
                         if not self.ft_grid[ny][nx] and not self.ft_grid[y][x] and next == True:
                             if self.between_four_nodes(x, y):
                                 next = False
-                                print(f"coords are {(x, y)}")
                                 self.grid[y][x] &= ~direction
                                 self.grid[ny][nx] &= ~OPPOSITE[direction]
+
+
+    def is_perfect_maze(self, blocked = None) -> bool:
+
+        """
+        Returns True iff the maze is perfect (connected + no cycles),
+        exploring from start_xy.
+
+        - grid[y][x] is your wall-bitmask cell.
+        - start_xy = (x, y) e.g. (self.entry[1], self.entry[0])
+        - blocked: optional 2D bool (True = ignore cell), e.g. maze.ft_grid
+        """
+        h, w = len(self.grid), len(self.grid[0])
+        sx, sy = self.entry
+
+        if blocked is None:
+            blocked = [[False] * w for _ in range(h)]
+
+        if not (0 <= sx < w and 0 <= sy < h) or blocked[sy][sx]:
+            return False
+
+        visited = set()
+        stack = [(sx, sy, None)]  # (x, y, parent_xy)
+
+        while stack:
+            x, y, parent = stack.pop()
+
+            if (x, y) in visited:
+                # revisited through another route => cycle
+                return False
+
+            visited.add((x, y))
+            cell = self.grid[y][x]
+
+            for direction, dx, dy in DIRECTIONS:
+                if (cell & direction) == 0:  # passage is open
+                    nx, ny = x + dx, y + dy
+                    if 0 <= nx < w and 0 <= ny < h and not blocked[ny][nx]:
+                        if parent is not None and (nx, ny) == parent:
+                            continue  # ignore the edge back to parent
+                        stack.append((nx, ny, (x, y)))
+
+        return True
+
+
+
+    def bfs_path(self, blocked=None) -> list:
+        """
+        Shortest path BFS from start_xy to goal_xy.
+        Returns: list[(x,y), ...] or None if unreachable.
+
+        - grid[y][x] = wall-bitmask
+        - DIRECTIONS = [(WALLBIT, dx, dy), ...]
+        - A passage is OPEN if (cell & WALLBIT) == 0
+        - blocked: optional 2D bool, True means 'do not step on that cell'
+        """
+
+        w, h = self.width, self.height
+
+        sx, sy = self.entry
+        gx, gy = self.exit
+
+        if blocked is None:
+            blocked = [[False] * w for _ in range(h)]
+
+        # bounds / blocked checks
+        def ok(x, y):
+            return 0 <= x < w and 0 <= y < h and not blocked[y][x]
+
+        if not ok(sx, sy) or not ok(gx, gy):
+            return None
+
+        q = deque([(sx, sy)])
+        parent = {(sx, sy): None}   # child -> parent
+
+        while q:
+            x, y = q.popleft()
+            if (x, y) == (gx, gy):
+                break
+
+            cell = self.grid[y][x]
+            for wall_bit, dx, dy in DIRECTIONS:
+                # Only move if that wall is open
+                if (cell & wall_bit) == 0:
+                    nx, ny = x + dx, y + dy
+                    if ok(nx, ny) and (nx, ny) not in parent:
+                        parent[(nx, ny)] = (x, y)
+                        q.append((nx, ny))
+
+        # reconstruct path
+        if (gx, gy) not in parent:
+            return None
+
+        path = []
+        cur = (gx, gy)
+        while cur is not None:
+            path.append(cur)
+            cur = parent[cur]
+        path.reverse()
+        return path
 
 
 # just to visualize and know if it is working
@@ -141,10 +243,23 @@ def draw_ascii(grid):
     print("┼" + "───┼" * w)
 
 
-config = Confs()
-print(f"config = {config.config}")
-maze = MazeGenerator(config.config)
-# for _ in maze.grid:
-#     print(_)
-draw_ascii(maze.grid)
-print(maze.grid[0][0])
+
+def main():
+    config = Confs()
+    # print(f"config = {config.config}")
+
+    for i in range(1000):
+        maze = MazeGenerator(config.config)
+        # draw_ascii(self.grid)
+        print(f"\n\n\n\nentering in round {i}\n\n\n\n")
+        if maze.is_perfect_maze() == False:
+            break
+
+    draw_ascii(maze.grid)
+    # print(maze.grid[0][0])
+    path = maze.bfs_path()
+    print(path)
+
+
+if __name__ == '__main__':
+    main()

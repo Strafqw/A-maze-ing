@@ -28,8 +28,9 @@ class MazeGenerator_new:
         self.seed = seed
         self.ft_grid = None
         self.solution = None
+        print(f"\n\nperfect is {self.perfect}\n\n")
         self.grid    = self.dfs(self.width, self.height)
-        self.make_imperfect()
+        # self.make_imperfect()
 
     def close_ft(self, visited: list, glip: list) -> list:
         if self.width >= 9 and self.height >= 7:
@@ -42,49 +43,42 @@ class MazeGenerator_new:
             if self.ft_grid[self.exit[1]][self.exit[0]] == True:
                 raise MazeError(f"exit is in 42 symbol")
         else:
-            for _ in glip:
-                x, y = _
-                visited[y][x] = False
-                self.ft_grid = [row[:] for row in visited]
+            self.ft_grid = [row[:] for row in visited]
         return visited
 
 
     def dfs(self, width, height):
-        # creates all cells with 4 walls (1111 = N,E,S,W closed)
+        # creates all cells with 4 walls
         grid = [[0b1111 for _ in range(width)] for _ in range(height)]
-        visited = [[False] * width for _ in range(height)]
-           
-
-        entry_x, entry_y = self.entry  # entry is [x, y]
-        stack = [(entry_x, entry_y)]
+        visited = [[False]*width for _ in range(height)]
         ft_closed = self.close_ft(visited, GLYPH_42)
-
-        if self.seed:
-            random.seed(self.seed)
+        stack = [(self.entry[1], self.entry[0])]
+        visited[self.entry[0]][self.entry[1]] = True
+        if self.seed == '1':
+            random.seed(10)
 
         while stack:
-            x, y = stack[-1]
+            x, y = stack[-1]            # Last visited cell
             found = False
 
             dirs = DIRECTIONS[:]
-            random.shuffle(dirs)
+            random.shuffle(dirs)    # if I don't shuffle them, I will get always the same maze
 
             for direction, dx, dy in dirs:
                 nx, ny = x + dx, y + dy
 
                 if 0 <= nx < width and 0 <= ny < height and not visited[ny][nx]:
-                    # open passage between (x,y) and (nx,ny)
                     grid[y][x] &= ~direction
                     grid[ny][nx] &= ~OPPOSITE[direction]
 
                     visited[ny][nx] = True
-                    stack.append((nx, ny))
+                    stack.append((nx, ny))  # go deeper
                     found = True
                     break
 
             if not found:
-                stack.pop()
-
+                stack.pop()  # backtrack
+        
         return grid
 
 
@@ -94,13 +88,15 @@ class MazeGenerator_new:
         return False
 
     def make_imperfect(self) -> None:
-        if self.perfect == 'True':
+        if self.perfect == True:
+            print("Is perfect")
             return None
         dirs = DIRECTIONS[:]
 
         for y in range(self.height):
             next = True
             for x in range(self.width):
+                print("imperfect")
                 for direction, dx, dy in dirs:
                     nx = x + dx
                     ny = y + dy
@@ -279,11 +275,13 @@ def draw_ascii(grid):
 def main():
 
     # print(f"config = {config.config}")
-
-    for i in range(1000):
-        maze = MazeGenerator_new(width=9, height=7, entry=(0, 0), exit=(8, 6), perfect=True, seed=None)
-        if maze.is_perfect_maze() == False:
-            break
+    maze = MazeGenerator_new(width=10, height=8, entry=(0, 0), exit=(1, 4), perfect=True)
+    if maze.perfect == False:
+        print("\n\n\falsen\n\n")
+        for i in range(1000):
+            if maze.is_perfect_maze() == False:
+                break
+            maze = MazeGenerator_new(width=9, height=7, entry=(0, 0), exit=(8, 6), perfect=True, seed=None)
 
     draw_ascii(maze.grid)
     path = maze.solve()

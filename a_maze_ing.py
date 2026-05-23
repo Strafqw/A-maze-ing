@@ -58,6 +58,12 @@ def make_maze(cfg: Config) -> MazeGenerator_new:
         seed=cfg.seed,
     )
     maze.solve()
+    try:
+        print(f"exporting to {cfg.output_file}")
+        maze.export(cfg.output_file)
+    except OSError as e:
+        print(f"Cannot write output file {cfg.output_file}: {e}")
+        return 1
     return maze
 
 
@@ -88,11 +94,6 @@ def main(argv: list[str]) -> int:
         return 1
     if maze.solution is None:
         print("Maze has no valid path from ENTRY to EXIT")
-        return 1
-    try:
-        maze.export(cfg.output_file)
-    except OSError as e:
-        print(f"Cannot write output file {cfg.output_file}: {e}")
         return 1
 
     from visualizer import run

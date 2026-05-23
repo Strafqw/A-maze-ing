@@ -13,7 +13,7 @@ quit).
 
 from typing import Callable, Optional
 
-from mazegen import NORTH, EAST, WEST
+from MazeGenerator_new.vars import NORTH, EAST, WEST
 
 
 RESET = "\033[0m"

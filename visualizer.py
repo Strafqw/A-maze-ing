@@ -32,24 +32,30 @@ PATH_COLOR = "\033[46m"  # cyan background
 FT_COLOR = "\033[43m"  # yellow background
 
 
-def _cell_marker(
+def _cell_bg(
     x: int,
     y: int,
     entry: tuple[int, int],
     exit_: tuple[int, int],
     path_set: Optional[set[tuple[int, int]]],
     ft_grid: Optional[list[list[bool]]],
-) -> str:
-    """Return the 3-character inner block for a cell, with colour codes."""
+) -> Optional[str]:
+    """Return the background ANSI code for cell (x, y), or None."""
     if (x, y) == tuple(entry):
-        return f"{ENTRY_COLOR}   {RESET}"
+        return ENTRY_COLOR
     if (x, y) == tuple(exit_):
-        return f"{EXIT_COLOR}   {RESET}"
+        return EXIT_COLOR
     if path_set is not None and (x, y) in path_set:
-        return f"{PATH_COLOR}   {RESET}"
+        return PATH_COLOR
     if ft_grid is not None and ft_grid[y][x]:
-        return f"{FT_COLOR}   {RESET}"
-    return "   "
+        return FT_COLOR
+    return None
+
+
+def _block(bg: Optional[str], width: int) -> str:
+    """Return `width` spaces, painted with `bg` if set."""
+    spaces = " " * width
+    return f"{bg}{spaces}{RESET}" if bg else spaces
 
 
 def render(
@@ -67,6 +73,11 @@ def render(
     h, w = len(grid), len(grid[0])
     path_set = set(path) if path else None
 
+    def bg(x: int, y: int) -> Optional[str]:
+        if y < 0 or y >= h or x < 0 or x >= w:
+            return None
+        return _cell_bg(x, y, entry, exit_, path_set, ft_grid)
+
     lines: list[str] = []
     for y in range(h):
         top_chars: list[str] = []
@@ -74,18 +85,22 @@ def render(
 
         for x in range(w):
             cell = grid[y][x]
+            here = bg(x, y)
             top_chars.append(f"{wall_color}┼{RESET}")
-            marker = _cell_marker(x, y, entry, exit_, path_set, ft_grid)
             if cell & NORTH:
                 top_chars.append(f"{wall_color}───{RESET}")
             else:
-                top_chars.append(marker)
+                above = bg(x, y - 1)
+                shared = here if here is not None and here == above else None
+                top_chars.append(_block(shared, 3))
 
             if cell & WEST:
                 mid_chars.append(f"{wall_color}│{RESET}")
             else:
-                mid_chars.append(" ")
-            mid_chars.append(marker)
+                left = bg(x - 1, y)
+                shared = here if here is not None and here == left else None
+                mid_chars.append(_block(shared, 1))
+            mid_chars.append(_block(here, 3))
 
             if x == w - 1:
                 if cell & EAST:

@@ -13,23 +13,23 @@ quit).
 
 from typing import Callable, Optional
 
-from vars import NORTH, EAST, SOUTH, WEST
+from mazegen import NORTH, EAST, WEST
 
 
 RESET = "\033[0m"
 
 WALL_COLORS = [
-    ("white",   "\033[37m"),
-    ("cyan",    "\033[36m"),
-    ("green",   "\033[32m"),
-    ("yellow",  "\033[33m"),
+    ("white", "\033[37m"),
+    ("cyan", "\033[36m"),
+    ("green", "\033[32m"),
+    ("yellow", "\033[33m"),
     ("magenta", "\033[35m"),
 ]
 
-ENTRY_COLOR = "\033[45m"   # magenta background
-EXIT_COLOR  = "\033[41m"   # red background
-PATH_COLOR  = "\033[46m"   # cyan background
-FT_COLOR    = "\033[43m"   # yellow background
+ENTRY_COLOR = "\033[45m"  # magenta background
+EXIT_COLOR = "\033[41m"  # red background
+PATH_COLOR = "\033[46m"  # cyan background
+FT_COLOR = "\033[43m"  # yellow background
 
 
 def _cell_marker(
@@ -75,16 +75,17 @@ def render(
         for x in range(w):
             cell = grid[y][x]
             top_chars.append(f"{wall_color}┼{RESET}")
+            marker = _cell_marker(x, y, entry, exit_, path_set, ft_grid)
             if cell & NORTH:
                 top_chars.append(f"{wall_color}───{RESET}")
             else:
-                top_chars.append(_cell_marker(x, y, entry, exit_, path_set, ft_grid))
+                top_chars.append(marker)
 
             if cell & WEST:
                 mid_chars.append(f"{wall_color}│{RESET}")
             else:
                 mid_chars.append(" ")
-            mid_chars.append(_cell_marker(x, y, entry, exit_, path_set, ft_grid))
+            mid_chars.append(marker)
 
             if x == w - 1:
                 if cell & EAST:

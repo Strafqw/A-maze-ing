@@ -217,48 +217,24 @@ class MazeGenerator:
         return path
 
 
-# just to visualize and know if it is working
-def draw_ascii(grid):
-    h = len(grid)
-    w = len(grid[0])
-
-    for y in range(h):
-        # top walls
-        top = ""
-        mid = ""
-
-        for x in range(w):
-            cell = grid[y][x]
-
-            top += "┼───" if cell & NORTH else "┼   "
-
-            mid += "│   " if cell & WEST else "    "
-
-            if x == w - 1:
-                mid += "│" if cell & EAST else " "
-
-        print(top + "┼")
-        print(mid)
-
-    print("┼" + "───┼" * w)
-
+def build_state(config: dict) -> dict:
+    """Generate a maze and bundle everything the visualizer needs."""
+    maze = MazeGenerator(config)
+    return {
+        "grid": maze.grid,
+        "entry": (maze.entry[0], maze.entry[1]),
+        "exit": (maze.exit[0], maze.exit[1]),
+        "path": maze.bfs_path(),
+        "ft_grid": maze.ft_grid,
+    }
 
 
 def main():
-    config = Confs()
-    # print(f"config = {config.config}")
+    from visualizer import run
 
-    for i in range(1000):
-        maze = MazeGenerator(config.config)
-        # draw_ascii(self.grid)
-        print(f"\n\n\n\nentering in round {i}\n\n\n\n")
-        if maze.is_perfect_maze() == False:
-            break
-
-    draw_ascii(maze.grid)
-    # print(maze.grid[0][0])
-    path = maze.bfs_path()
-    print(path)
+    config = Confs().config
+    state = build_state(config)
+    run(state, regenerate=lambda: build_state(config))
 
 
 if __name__ == '__main__':

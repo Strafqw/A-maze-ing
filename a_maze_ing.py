@@ -11,12 +11,45 @@ import sys
 from typing import Any
 
 from config_parser import Config, ConfigError, parse_config
-from mazegen import MazeError, MazeGenerator
+# from mazegen import MazeError, MazeGenerator
+from MazeGenerator_new import MazeGenerator_new, MazeError
 
 
-def make_maze(cfg: Config) -> MazeGenerator:
+# just to visualize and know if it is working
+def draw_ascii(grid):
+    EAST  = 0b1000
+    NORTH = 0b0100
+    WEST  = 0b0010
+    SOUTH = 0b0001
+    h = len(grid)
+    w = len(grid[0])
+
+    for y in range(h):
+        # top walls
+        top = ""
+        mid = ""
+
+        for x in range(w):
+            cell = grid[y][x]
+
+            top += "┼───" if cell & NORTH else "┼   "
+
+            mid += "│   " if cell & WEST else "    "
+
+            if x == w - 1:
+                mid += "│" if cell & EAST else " "
+
+        print(top + "┼")
+        print(mid)
+
+    print("┼" + "───┼" * w)
+
+
+
+def make_maze(cfg: Config) -> MazeGenerator_new:
+    print(f"cfg is {cfg}")
     """Build a maze from a parsed config and solve it."""
-    maze = MazeGenerator(
+    maze = MazeGenerator_new(
         width=cfg.width,
         height=cfg.height,
         entry=cfg.entry,
@@ -28,7 +61,7 @@ def make_maze(cfg: Config) -> MazeGenerator:
     return maze
 
 
-def build_state(maze: MazeGenerator) -> dict[str, Any]:
+def build_state(maze: MazeGenerator_new) -> dict[str, Any]:
     """Bundle everything the visualizer needs into a single dict."""
     return {
         "grid": maze.grid,

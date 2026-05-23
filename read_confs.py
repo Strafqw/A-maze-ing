@@ -39,13 +39,13 @@ class Confs:
 
 class MazeGenerator:
     def __init__(self, config: dict):
-        self.config  = config
-        self.width   = self.config.get('WIDTH')
-        self.height  = self.config.get('HEIGHT')
+        self.config = config
+        self.width = self.config.get('WIDTH')
+        self.height = self.config.get('HEIGHT')
         self.entry = [int(_) for _ in self.config.get('ENTRY').split(',')]
         self.exit = [int(_) for _ in self.config.get('EXIT').split(',')]
         self.ft_grid = None
-        self.grid    = self.dfs(self.width, self.height)
+        self.grid = self.dfs(self.width, self.height)
         self.make_imperfect()
         self.solution = None
 
@@ -244,9 +244,8 @@ class MazeGenerator:
             elif dx == -1 and dy == 0:
                 out.append("W")
             else:
-                raise ValueError(f"Invalid step: {(x1,y1)} -> {(x2,y2)}")
+                raise ValueError(f"Invalid step: {(x1, y1)} -> {(x2, y2)}")
         return "".join(out)
-
 
     def export_maze_hex(self, out_file: str):
         """
@@ -302,7 +301,6 @@ def build_state(config: dict) -> dict:
         "path": maze.bfs_path(),
         "ft_grid": maze.ft_grid,
     }
-
 
 
 def main():

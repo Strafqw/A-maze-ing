@@ -15,39 +15,7 @@ from config_parser import Config, ConfigError, parse_config
 from MazeGenerator_new import MazeGenerator_new, MazeError
 
 
-# just to visualize and know if it is working
-def draw_ascii(grid):
-    EAST  = 0b1000
-    NORTH = 0b0100
-    WEST  = 0b0010
-    SOUTH = 0b0001
-    h = len(grid)
-    w = len(grid[0])
-
-    for y in range(h):
-        # top walls
-        top = ""
-        mid = ""
-
-        for x in range(w):
-            cell = grid[y][x]
-
-            top += "┼───" if cell & NORTH else "┼   "
-
-            mid += "│   " if cell & WEST else "    "
-
-            if x == w - 1:
-                mid += "│" if cell & EAST else " "
-
-        print(top + "┼")
-        print(mid)
-
-    print("┼" + "───┼" * w)
-
-
-
 def make_maze(cfg: Config) -> MazeGenerator_new:
-    print(f"cfg is {cfg}")
     """Build a maze from a parsed config and solve it."""
     maze = MazeGenerator_new(
         width=cfg.width,
@@ -57,9 +25,23 @@ def make_maze(cfg: Config) -> MazeGenerator_new:
         perfect=cfg.perfect,
         seed=cfg.seed,
     )
+    if maze.perfect == False:
+        for i in range(1000):
+            if maze.is_perfect_maze() == False:
+                break
+            else:
+                maze = MazeGenerator_new(
+                    width=cfg.width,
+                    height=cfg.height,
+                    entry=cfg.entry,
+                    exit=cfg.exit,
+                    perfect=cfg.perfect,
+                    seed=cfg.seed,
+                )
     maze.solve()
+    if maze.small_size:
+        print("cannot generate 42 symbol (small size)")
     try:
-        print(f"exporting to {cfg.output_file}")
         maze.export(cfg.output_file)
     except OSError as e:
         print(f"Cannot write output file {cfg.output_file}: {e}")

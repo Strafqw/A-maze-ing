@@ -28,9 +28,9 @@ class MazeGenerator_new:
         self.seed = seed
         self.ft_grid = None
         self.solution = None
-        print(f"\n\nperfect is {self.perfect}\n\n")
+        self.small_size = None
         self.grid    = self.dfs(self.width, self.height)
-        # self.make_imperfect()
+        self.make_imperfect()
 
     def close_ft(self, visited: list, glip: list) -> list:
         if self.width >= 9 and self.height >= 7:
@@ -43,6 +43,7 @@ class MazeGenerator_new:
             if self.ft_grid[self.exit[1]][self.exit[0]] == True:
                 raise MazeError(f"exit is in 42 symbol")
         else:
+            self.small_size = True
             self.ft_grid = [row[:] for row in visited]
         return visited
 
@@ -52,10 +53,11 @@ class MazeGenerator_new:
         grid = [[0b1111 for _ in range(width)] for _ in range(height)]
         visited = [[False]*width for _ in range(height)]
         ft_closed = self.close_ft(visited, GLYPH_42)
-        stack = [(self.entry[1], self.entry[0])]
-        visited[self.entry[0]][self.entry[1]] = True
-        if self.seed == '1':
-            random.seed(10)
+        ex, ey = self.entry
+        stack = [(ex, ey)]
+        visited[ey][ex] = True
+        if self.seed is not None:
+            random.seed(self.seed)
 
         while stack:
             x, y = stack[-1]            # Last visited cell
@@ -83,20 +85,21 @@ class MazeGenerator_new:
 
 
     def between_four_nodes(self, x: int, y: int) -> bool:
+        if self.width <= 2 or self.height <= 2:
+            return True
         if 0 < x < self.width - 1 and 0 < y < self.height - 1:
             return True
         return False
 
+
     def make_imperfect(self) -> None:
         if self.perfect == True:
-            print("Is perfect")
             return None
         dirs = DIRECTIONS[:]
 
         for y in range(self.height):
             next = True
             for x in range(self.width):
-                print("imperfect")
                 for direction, dx, dy in dirs:
                     nx = x + dx
                     ny = y + dy
@@ -274,10 +277,8 @@ def draw_ascii(grid):
 
 def main():
 
-    # print(f"config = {config.config}")
     maze = MazeGenerator_new(width=10, height=8, entry=(0, 0), exit=(1, 4), perfect=True)
     if maze.perfect == False:
-        print("\n\n\falsen\n\n")
         for i in range(1000):
             if maze.is_perfect_maze() == False:
                 break

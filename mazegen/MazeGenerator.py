@@ -8,7 +8,7 @@ imperfect, solves it with BFS and exports it to the hex wall format.
 import random
 from typing import Optional
 
-from .vars import DIRECTIONS, EAST, GLYPH_42, NORTH, OPPOSITE, WEST
+from .vars import DIRECTIONS, GLYPH_42, OPPOSITE
 
 
 class MazeError(Exception):
@@ -40,6 +40,16 @@ class MazeGenerator:
         perfect: bool = True,
         seed: Optional[int] = None,
     ) -> None:
+        """Initializes the maze generator.
+
+        Args:
+            width (int): width number.
+            height (int): height number.
+            entry (tuple[int, int]): entry coors.
+            exit (tuple[int, int]): exit coors.
+            perfect (bool): if maze is perfect.
+            seed (Optional[int]): fixed maze path.
+        """
         self.width = width
         self.height = height
         self.entry = entry
@@ -60,6 +70,15 @@ class MazeGenerator:
         On large enough mazes the glyph is centered; the entry and exit
         must not fall on it. On smaller mazes the glyph is skipped and
         ``small_size`` is set.
+
+        Args:
+            visited (list[list[bool]]):
+                matrix of visited (defaulted to false)
+            glip (list[tuple[int, int]]):
+                glip of 42 coords
+
+        return:
+            list[tuple[int, int]]: visited with 42 glip cells marked as true
         """
         if self.width >= 9 and self.height >= 7:
             for gx, gy in glip:
@@ -77,7 +96,19 @@ class MazeGenerator:
         return visited
 
     def dfs(self, width: int, height: int) -> list[list[int]]:
-        """Carve a perfect maze with an iterative DFS backtracker."""
+        """Carve a perfect maze with an iterative DFS backtracker.
+        Advances in a random direction if the next cell has not been visited,
+        Adds that wall to stack list.
+        If wall has been visited, it choses another.
+        If none available, pops stack el & does the same in previous cell
+        Does that untill stack is empty
+
+        Args:
+            width (int): maze width
+            height (int): maze height
+
+        return:
+            list[list[int]]: grid with the cells open/ close walls"""
         # creates all cells with 4 walls
         grid = [[0b1111 for _ in range(width)] for _ in range(height)]
         visited = [[False] * width for _ in range(height)]
@@ -114,7 +145,13 @@ class MazeGenerator:
         return grid
 
     def between_four_nodes(self, x: int, y: int) -> bool:
-        """Return ``True`` if (x, y) is an interior cell."""
+        """Validate if cell is btween 4 nodes
+            -> avoids 3x3 open cells
+        args:
+            x (int): x pos
+            y (int): y pos
+        Return:
+            bool: True if (x, y) is an interior cell else False."""
         if self.width <= 2 or self.height <= 2:
             return True
         if 0 < x < self.width - 1 and 0 < y < self.height - 1:
@@ -122,7 +159,8 @@ class MazeGenerator:
         return False
 
     def make_imperfect(self) -> None:
-        """Open one extra wall per row to introduce loops."""
+        """Open one extra wall per row to introduce loops.
+        Makes sure that is between 4 nodes, avoiding 3x3 open cells"""
         if self.perfect:
             return None
         dirs = DIRECTIONS[:]
@@ -146,11 +184,13 @@ class MazeGenerator:
     def is_perfect_maze(
         self, blocked: Optional[list[list[bool]]] = None
     ) -> bool:
-        """Return ``True`` if the maze is connected and acyclic.
+        """goes through all directions in each node.
+        If cell was already visited, than it is not perfect
 
         Args:
             blocked: Optional 2D bool grid (``True`` = ignore cell),
-                e.g. :attr:`ft_grid`.
+                e.g.:ft_grid.
+        Return (bool): True if the maze is connected and not perfect.
         """
         h, w = len(self.grid), len(self.grid[0])
         sx, sy = self.entry
@@ -170,14 +210,13 @@ class MazeGenerator:
             x, y, parent = stack.pop()
 
             if (x, y) in visited:
-                # revisited through another route => cycle
                 return False
 
             visited.add((x, y))
             cell = self.grid[y][x]
 
             for direction, dx, dy in DIRECTIONS:
-                if (cell & direction) == 0:  # passage is open
+                if (cell & direction) == 0:
                     nx, ny = x + dx, y + dy
                     if 0 <= nx < w and 0 <= ny < h and not blocked[ny][nx]:
                         if parent is not None and (nx, ny) == parent:
@@ -190,9 +229,12 @@ class MazeGenerator:
         self, blocked: Optional[list[list[bool]]] = None
     ) -> Optional[list[tuple[int, int]]]:
         """Find the shortest path from entry to exit with BFS.
+        appends visited cells to parent.
+        When it reaches exit, it stops.3
+        when going back, it identifies the parent, so never gets lost
 
         Returns:
-            The path as a list of ``(x, y)`` cells, or ``None`` if the
+            The path as a list of (x, y) cells, or None if the
             exit is unreachable.
         """
         w, h = self.width, self.height
@@ -244,7 +286,11 @@ class MazeGenerator:
         return path
 
     def path_to_dirs(self) -> str:
-        """Convert the solution path to a 'NESW' string."""
+        """Convert the solution path.
+        Taks a path (between 2 cords) and converts it to 'NESW' string
+        return (str):
+            path to exit
+        """
         if not self.solution or len(self.solution) < 2:
             return ""
 
@@ -271,6 +317,9 @@ class MazeGenerator:
         One hex digit per cell (closed-wall bits N=1, E=2, S=4, W=8),
         rows one per line; then a blank line, the entry and exit
         coordinates, and the solution path. Every line ends with ``\\n``.
+
+        Args:
+            out_file: file where path is writen
         """
         with open(out_file, "w", encoding="utf-8") as f:
             for y in range(self.height):
@@ -286,52 +335,3 @@ class MazeGenerator:
             f.write(",".join(str(el) for el in self.exit))
             f.write("\n")
             f.write(self.path_to_dirs())
-
-
-# just to visualize and know if it is working
-def draw_ascii(grid: list[list[int]]) -> None:
-    """Print a simple ASCII rendering of a wall-bitmask grid."""
-    h = len(grid)
-    w = len(grid[0])
-
-    for y in range(h):
-        # top walls
-        top = ""
-        mid = ""
-
-        for x in range(w):
-            cell = grid[y][x]
-
-            top += "┼───" if cell & NORTH else "┼   "
-
-            mid += "│   " if cell & WEST else "    "
-
-            if x == w - 1:
-                mid += "│" if cell & EAST else " "
-
-        print(top + "┼")
-        print(mid)
-
-    print("┼" + "───┼" * w)
-
-
-def main() -> None:
-    """Quick manual check of the generator."""
-    maze = MazeGenerator(
-        width=10, height=8, entry=(0, 0), exit=(1, 4), perfect=True
-    )
-    if not maze.perfect:
-        for _ in range(1000):
-            if not maze.is_perfect_maze():
-                break
-            maze = MazeGenerator(
-                width=9, height=7, entry=(0, 0), exit=(8, 6),
-                perfect=True, seed=None,
-            )
-
-    draw_ascii(maze.grid)
-    maze.solve()
-
-
-if __name__ == '__main__':
-    main()

@@ -11,9 +11,9 @@ subject's requirements (regenerate, show/hide path, change wall colours,
 quit).
 """
 
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
-from MazeGenerator_new.vars import NORTH, EAST, WEST
+from mazegen.vars import NORTH, EAST, WEST
 
 
 RESET = "\033[0m"
@@ -121,8 +121,8 @@ def render(
 
 
 def run(
-    initial_state: dict,
-    regenerate: Callable[[], dict],
+    initial_state: dict[str, Any],
+    regenerate: Callable[[], dict[str, Any]],
 ) -> None:
     """Drive the interactive menu loop.
 

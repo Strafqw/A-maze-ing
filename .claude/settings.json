@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs)",
+      "Bash(cat)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 output_validator.py /tmp/out1.txt)",
+      "Bash(python3 /tmp/check.py)",
+      "Bash(PYTHONPATH=/home/sampipampi/amz python3 /tmp/check.py)",
+      "Bash(python3 a_maze_ing.py /tmp/bad.txt)",
+      "Bash(echo \"=== EXIT: $? ===\")",
+      "Bash(python3 a_maze_ing.py /tmp/nope.txt)",
+      "Bash(python3 a_maze_ing.py /tmp/e42.txt)",
+      "Bash(make clean *)",
+      "Bash(make -n run)",
+      "Bash(git mv *)",
+      "Bash(python3 -c \"from mazegen import MazeGenerator, MazeError; m=MazeGenerator\\(width=20,height=15,entry=\\(0,0\\),exit=\\(19,14\\),perfect=True,seed=42\\); print\\('solve len:', len\\(m.solve\\(\\)\\)\\); print\\('dirs:', m.path_to_dirs\\(\\)[:20]+'...'\\); print\\('OK'\\)\")",
+      "Bash(python3 a_maze_ing.py /tmp/c1.txt)",
+      "Bash(echo \"run OK exit=$?\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(echo \"=== correctness checker \\(all sizes/modes\\) ===\" *)",
+      "Bash(mypy . --strict)",
+      "Bash(poetry --version)",
+      "Bash(python3 -c \"import build; print\\('build', build.__version__\\)\")",
+      "Bash(python3 -c \"import setuptools; print\\('setuptools', setuptools.__version__\\)\")",
+      "Bash(python3 -m pip --version)",
+      "Bash(python3 -m venv /tmp/buildenv)",
+      "Bash(/tmp/buildenv/bin/pip install *)",
+      "Bash(/tmp/buildenv/bin/python -m build)",
+      "Bash(python3 -m venv /tmp/testenv)",
+      "Bash(/tmp/testenv/bin/pip install *)",
+      "Bash(/tmp/testenv/bin/python -c ' *)",
+      "Bash(/tmp/testenv/bin/pip show *)",
+      "Bash(git check-ignore *)",
+      "Bash(make build *)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

@@ -1,14 +1,20 @@
-[tool.poetry]
-name = "a-maze-ing"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.12"
-
-
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# The tools pip needs to BUILD the package, and which backend to call.
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Package metadata (PEP 621 standard format).
+name = "mazegen"
+version = "1.0.0"
+description = "Reusable maze generator (recursive backtracker)."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "João Sampaio", email = "joasampa@student.42lisboa.com" },
+    { name = "Manuel Romão", email = "mromao-s@student.42lisboa.com" },
+]
+
+[tool.setuptools]
+# Ship ONLY the reusable module, not the app scripts at the repo root.
+packages = ["mazegen"]

@@ -11,13 +11,12 @@ import sys
 from typing import Any
 
 from config_parser import Config, ConfigError, parse_config
-# from mazegen import MazeError, MazeGenerator
-from MazeGenerator_new import MazeGenerator_new, MazeError
+from mazegen import MazeGenerator, MazeError
 
 
-def make_maze(cfg: Config) -> MazeGenerator_new:
+def make_maze(cfg: Config) -> MazeGenerator:
     """Build a maze from a parsed config and solve it."""
-    maze = MazeGenerator_new(
+    maze = MazeGenerator(
         width=cfg.width,
         height=cfg.height,
         entry=cfg.entry,
@@ -25,12 +24,12 @@ def make_maze(cfg: Config) -> MazeGenerator_new:
         perfect=cfg.perfect,
         seed=cfg.seed,
     )
-    if maze.perfect == False:
+    if not maze.perfect:
         for i in range(1000):
-            if maze.is_perfect_maze() == False:
+            if not maze.is_perfect_maze():
                 break
             else:
-                maze = MazeGenerator_new(
+                maze = MazeGenerator(
                     width=cfg.width,
                     height=cfg.height,
                     entry=cfg.entry,
@@ -44,12 +43,13 @@ def make_maze(cfg: Config) -> MazeGenerator_new:
     try:
         maze.export(cfg.output_file)
     except OSError as e:
-        print(f"Cannot write output file {cfg.output_file}: {e}")
-        return 1
+        raise MazeError(
+            f"cannot write output file {cfg.output_file}: {e}"
+        ) from e
     return maze
 
 
-def build_state(maze: MazeGenerator_new) -> dict[str, Any]:
+def build_state(maze: MazeGenerator) -> dict[str, Any]:
     """Bundle everything the visualizer needs into a single dict."""
     return {
         "grid": maze.grid,

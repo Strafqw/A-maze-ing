@@ -1,9 +1,0 @@
-__pycache__/
-*.pyc
-*.pyo
-.mypy_cache/
-
-# Build intermediates (the final mazegen-*.whl / .tar.gz live at the repo root)
-build/
-dist/
-*.egg-info/

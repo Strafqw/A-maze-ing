@@ -10,35 +10,41 @@
 #   make clean        remove caches and temporary artifacts
 
 PYTHON  ?= python3
+
+PYTHON_ENV := .venv/bin/python
+FLAKE8 := .venv/bin/flake8
+MYPY := .venv/bin/mypy
 MAIN    := a_maze_ing.py
 CONFIG  ?= config.txt
 
 .PHONY: install run debug lint lint-strict build clean
 
 install:
-	$(PYTHON) -m pip install --upgrade pip
-	$(PYTHON) -m pip install flake8 mypy build
+	$(PYTHON) -m venv .venv
+	$(PYTHON_ENV) -m pip install --upgrade pip
+	$(PYTHON_ENV) -m pip install -r requirements.txt
 
 run:
-	$(PYTHON) $(MAIN) $(CONFIG)
+	$(PYTHON_ENV) $(MAIN) $(CONFIG)
 
 debug:
-	$(PYTHON) -m pdb $(MAIN) $(CONFIG)
+	$(PYTHON_ENV) -m pdb $(MAIN) $(CONFIG)
 
 lint:
-	flake8 .
-	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
+	$(FLAKE8) . --exclude=.venv
+	$(MYPY) . --warn-return-any --warn-unused-ignores --ignore-missing-imports \
 		--disallow-untyped-defs --check-untyped-defs
 
 lint-strict:
-	flake8 .
-	mypy . --strict
+	$(FLAKE8) . --exclude=.venv
+	$(MYPY) . --strict
 
 build:
-	$(PYTHON) -m build
+	$(PYTHON_ENV) -m build
 
 clean:
 	rm -rf __pycache__ */__pycache__ .mypy_cache .pytest_cache
 	rm -rf build dist *.egg-info
+	rm -rf .venv
 	find . -type f -name '*.pyc' -delete
 	find . -type f -name '*.pyo' -delete

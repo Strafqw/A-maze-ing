@@ -63,7 +63,8 @@ def parse_config(path: str) -> Config:
         raise ConfigError(f"{key}: expected boolean, got {raw_value!r}")
 
     def parse_coords(raw_value: str, key: str) -> tuple[int, int]:
-        parts = raw_value.split(",")
+        stripped = raw_value.strip().lstrip("(").rstrip(")")
+        parts = stripped.split(",")
         if len(parts) != 2:
             raise ConfigError(f"{key}: expected 'x,y', got {raw_value!r}")
         try:
@@ -78,6 +79,10 @@ def parse_config(path: str) -> Config:
     entry = parse_coords(raw["ENTRY"], "ENTRY")
     exitcoor = parse_coords(raw["EXIT"], "EXIT")
     output_file = raw["OUTPUT_FILE"]
+    if not output_file.endswith(".txt"):
+        raise ConfigError(
+            f"OUTPUT_FILE must end with .txt, got {output_file!r}"
+        )
     perfect = parse_bool(raw["PERFECT"], "PERFECT")
     seed = parse_int(raw["SEED"], "SEED") if "SEED" in raw else None
     if width <= 0:

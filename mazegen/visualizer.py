@@ -91,14 +91,14 @@ def render(
                 top_chars.append(f"{wall_color}───{RESET}")
             else:
                 above = bg(x, y - 1)
-                shared = here if here is not None and here == above else None
+                shared = here if above is not None else None
                 top_chars.append(_block(shared, 3))
 
             if cell & WEST:
                 mid_chars.append(f"{wall_color}│{RESET}")
             else:
                 left = bg(x - 1, y)
-                shared = here if here is not None and here == left else None
+                shared = here if left is not None else None
                 mid_chars.append(_block(shared, 1))
             mid_chars.append(_block(here, 3))
 

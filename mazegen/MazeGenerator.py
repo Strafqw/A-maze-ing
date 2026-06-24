@@ -39,6 +39,7 @@ class MazeGenerator:
         exit: tuple[int, int],
         perfect: bool = True,
         seed: Optional[int] = None,
+        output_file: Optional[str] = None,
     ) -> None:
         """Initializes the maze generator.
 
@@ -49,6 +50,8 @@ class MazeGenerator:
             exit (tuple[int, int]): exit coors.
             perfect (bool): if maze is perfect.
             seed (Optional[int]): fixed maze path.
+            output_file (Optional[str]): if set, the maze is exported to
+                this file automatically after every :meth:`solve` call.
         """
         self.width = width
         self.height = height
@@ -56,6 +59,7 @@ class MazeGenerator:
         self.exit = exit
         self.perfect = perfect
         self.seed = seed
+        self.output_file = output_file
         self.ft_grid: list[list[bool]] = []
         self.solution: Optional[list[tuple[int, int]]] = None
         self.small_size: bool = False
@@ -283,6 +287,13 @@ class MazeGenerator:
             cur = parent[cur]
         path.reverse()
         self.solution = path
+        if self.output_file is not None:
+            try:
+                self.export(self.output_file)
+            except OSError as e:
+                raise MazeError(
+                    f"cannot write output file {self.output_file}: {e}"
+                ) from e
         return path
 
     def path_to_dirs(self) -> str:
